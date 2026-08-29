@@ -44,6 +44,8 @@ export class IsolatePipeline {
     this.packetsIn = 0;
     this.mlBusy = false;
     this.mlIn = 0;
+    this._inflight = null;
+    this._mlSentAt = 0;
     this.mlSink = null;
     this.enabled = false;
     this.mode = "isolated";
@@ -89,19 +91,6 @@ export class IsolatePipeline {
     }
   }
 
-  markUnsupported() {
-    this.status = "unsupported";
-  }
-
-  markCodec(id, mime) {
-    this.audioCodec = id || "";
-    this.audioMime = mime || "";
-    if (id && id !== "opus" && id !== "webm") {
-      this.status = "unsupported-codec";
-      console.log(PREFIX, "[HOOK] audio codec unsupported for intercept:", id, mime || "");
-    }
-  }
-
   resetAll() {
     this.decoder.reset();
     this.original.clear();
@@ -111,6 +100,8 @@ export class IsolatePipeline {
     this.packetsIn = 0;
     this.mlBusy = false;
     this.mlIn = 0;
+    this._inflight = null;
+    this._mlSentAt = 0;
     this._config = null;
     this.clock._stopAll();
     this.bench = new Bench();
@@ -176,7 +167,18 @@ export class IsolatePipeline {
     this.original.trim(t, KEEP_BEHIND_SEC, KEEP_AHEAD_SEC);
     this.processed.trim(t, KEEP_BEHIND_SEC, KEEP_AHEAD_SEC);
     this.drainPending(t);
+    this._unstickMl();
     this._pumpMl();
+  }
+
+  _unstickMl() {
+    if (!this.mlBusy) return;
+    const age = Date.now() - (this._mlSentAt || 0);
+    if (age < 4000) return;
+    console.log(PREFIX, "[ML] process timed out after", age, "ms — retry");
+    if (this._inflight) this._inflight._mlSent = false;
+    this.mlBusy = false;
+    this._inflight = null;
   }
 
   chunksForPlayback(from, to) {
@@ -195,7 +197,8 @@ export class IsolatePipeline {
 
   _pumpMl() {
     if (!this.enabled || this.emeSkip) return;
-    if (this.status === "unsupported" || this.status === "drm") return;
+    if (this.status === "unsupported" || this.status === "drm" || this.status === "unsupported-codec") return;
+    if (this.status === "model-loading") return;
     if (!this.mlSink || this.mlBusy) return;
     const ct = this.videoTime || 0;
     const pe = this.processed.endSec == null ? 0 : this.processed.endSec;
@@ -208,6 +211,8 @@ export class IsolatePipeline {
     if (!chunk) return;
     chunk._mlSent = true;
     this.mlBusy = true;
+    this._inflight = chunk;
+    this._mlSentAt = Date.now();
     this.mlIn++;
     const pcmCopy = chunk.pcm.slice();
     const msg = {
@@ -252,10 +257,11 @@ export class IsolatePipeline {
       const chunk = data.chunk;
       this.processed.push(chunk);
       this.mlBusy = false;
+      this._inflight = null;
       if (data.wallMs && chunk) this.bench.recordProcess(data.wallMs, chunk.durationSec || 0);
       const line = this.bench.maybeLogOnce();
       if (line) console.log(PREFIX, line);
-      if (this.enabled && this.status !== "drm" && this.status !== "unsupported" && this.status !== "model-error") {
+      if (this.enabled && this.status !== "drm" && this.status !== "unsupported" && this.status !== "unsupported-codec" && this.status !== "model-error") {
         this.status = "processing";
       }
       this._pumpMl();
