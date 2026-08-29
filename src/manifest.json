@@ -1,0 +1,76 @@
+{
+  "manifest_version": 3,
+  "name": "YT Speech Isolate",
+  "version": "0.1.0",
+  "description": "YouTube VOD: intercept future MSE audio, enhance speech locally with DeepFilterNet3, play in sync. No server.",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "YT Speech Isolate"
+  },
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://*.youtube.com/*",
+    "https://m.youtube.com/*",
+    "https://www.youtube-nocookie.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://youtube.com/*",
+        "https://m.youtube.com/*",
+        "https://www.youtube-nocookie.com/*",
+        "https://youtube-nocookie.com/*"
+      ],
+      "js": [
+        "hook.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://youtube.com/*",
+        "https://m.youtube.com/*",
+        "https://www.youtube-nocookie.com/*",
+        "https://youtube-nocookie.com/*"
+      ],
+      "js": [
+        "isolated.js"
+      ],
+      "css": [
+        "hud.css"
+      ],
+      "run_at": "document_start",
+      "world": "ISOLATED",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "hook.js",
+        "worker.js",
+        "assets/*",
+        "models/*"
+      ],
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://youtube.com/*",
+        "https://m.youtube.com/*",
+        "https://www.youtube-nocookie.com/*",
+        "https://youtube-nocookie.com/*"
+      ]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  },
+  "permissions": [
+    "offscreen"
+  ]
+}
