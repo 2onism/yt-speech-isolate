@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>YT Speech Isolate</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="yt-isolate-hud">
+    <div class="yti-title">YT Speech Isolate
+      <button type="button" data-cmd="on">ON</button>
+      <button type="button" data-cmd="off">OFF</button>
+    </div>
+    <div class="yti-row yti-status"><span class="yti-dot"></span><span class="yti-status-text">Idle</span></div>
+    <div class="yti-row">Lookahead: <span class="yti-look">0.0s</span></div>
+    <div class="yti-row">Processed: <span class="yti-proc">0.0s</span></div>
+    <div class="yti-row">Model: <span class="yti-model">DeepFilterNet3</span></div>
+    <div class="yti-row">Mode:
+      <button type="button" data-cmd="mode" data-mode="isolated">Isolated</button>
+      <button type="button" data-cmd="mode" data-mode="original">Original</button>
+    </div>
+    <div class="yti-hint"></div>
+    <div class="yti-debug">Debug: —</div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

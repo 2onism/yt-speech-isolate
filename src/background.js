@@ -51,6 +51,9 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     ensureOffscreen().then(function () { sendResponse({ ok: true }); });
     return true;
   }
+  if (msg.type === "YT_ISOLATE_STATS") {
+    chrome.runtime.sendMessage(msg).catch(function () {});
+  }
   if (msg.type === "YT_ISOLATE_ISOLATED_READY") {
     console.log(PREFIX, "isolated ready", msg.href, sender.tab && sender.tab.id);
     ensureOffscreen();

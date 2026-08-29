@@ -1,0 +1,57 @@
+html, body { margin: 0; background: #0a0c10; min-width: 320px; }
+#yt-isolate-hud {
+  pointer-events: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #e5e7eb;
+  background: rgba(10, 12, 16, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 8px 10px;
+  max-width: min(92vw, 420px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  user-select: none;
+}
+#yt-isolate-hud .yti-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f3f4f6;
+  margin-bottom: 4px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+#yt-isolate-hud button {
+  pointer-events: auto;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: #1f2937;
+  color: #e5e7eb;
+  padding: 2px 8px;
+}
+#yt-isolate-hud button.yti-on { background: #065f46; border-color: #34d399; }
+#yt-isolate-hud button.yti-off { background: #7f1d1d; border-color: #f87171; }
+#yt-isolate-hud button.yti-active { outline: 2px solid #fbbf24; }
+#yt-isolate-hud .yti-row { margin: 2px 0; }
+#yt-isolate-hud .yti-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #fbbf24;
+  margin-right: 6px;
+}
+#yt-isolate-hud .yti-dot.ok { background: #4ade80; }
+#yt-isolate-hud .yti-dot.bad { background: #f87171; }
+#yt-isolate-hud .yti-debug {
+  margin-top: 4px;
+  font-size: 10px;
+  color: #9ca3af;
+  word-break: break-word;
+}
+
+#yt-isolate-hud .yti-hint { margin-top: 4px; color: #fbbf24; }

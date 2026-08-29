@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
   "name": "YT Speech Isolate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "YouTube VOD: intercept future MSE audio, enhance speech locally with DeepFilterNet3, play in sync. No server.",
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "YT Speech Isolate"
+    "default_title": "YT Speech Isolate",
+    "default_popup": "popup.html"
   },
   "host_permissions": [
     "https://www.youtube.com/*",
@@ -41,9 +42,6 @@
       ],
       "js": [
         "isolated.js"
-      ],
-      "css": [
-        "hud.css"
       ],
       "run_at": "document_start",
       "world": "ISOLATED",

@@ -1,10 +1,9 @@
 /**
- * Isolated world: HUD + chrome.runtime port to offscreen ML worker.
+ * Isolated world: bridge MAIN <-> extension (ML offscreen + popup). No page HUD.
  */
-import { ensureHud, updateHud } from "./ui/hud.js";
-
 const PREFIX = "[yt-isolate]";
 let port = null;
+let lastStats = null;
 
 function postToMain(msg) {
   try { window.postMessage(msg, "*"); } catch (e) {}
@@ -22,17 +21,9 @@ function ensurePort() {
   port.onMessage.addListener(function (data) {
     if (data) postToMain({ type: "YT_ISOLATE_ML_OUT", payload: data });
   });
-  port.onDisconnect.addListener(function () {
-    port = null;
-  });
-  try {
-    chrome.runtime.sendMessage({ type: "YT_ISOLATE_ENSURE_OFFSCREEN" });
-  } catch (e) {}
+  port.onDisconnect.addListener(function () { port = null; });
+  try { chrome.runtime.sendMessage({ type: "YT_ISOLATE_ENSURE_OFFSCREEN" }); } catch (e) {}
   return port;
-}
-
-function onCmd(cmd) {
-  postToMain({ type: "YT_ISOLATE_CMD", cmd: cmd.cmd, mode: cmd.mode });
 }
 
 window.addEventListener("message", function (ev) {
@@ -40,7 +31,8 @@ window.addEventListener("message", function (ev) {
   const d = ev.data;
   if (!d || typeof d.type !== "string") return;
   if (d.type === "YT_ISOLATE_STATS") {
-    updateHud(d.stats);
+    lastStats = d.stats;
+    try { chrome.runtime.sendMessage({ type: "YT_ISOLATE_STATS", stats: d.stats }); } catch (e) {}
     return;
   }
   if (d.type === "YT_ISOLATE_ML_IN") {
@@ -52,9 +44,18 @@ window.addEventListener("message", function (ev) {
   }
 });
 
-function bootHud() { ensureHud(onCmd); }
-if (document.documentElement) bootHud();
-else document.addEventListener("DOMContentLoaded", bootHud);
+chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
+  if (!msg) return;
+  if (msg.type === "YT_ISOLATE_GET_STATS") {
+    sendResponse({ ok: true, stats: lastStats });
+    try { chrome.runtime.sendMessage({ type: "YT_ISOLATE_STATS", stats: lastStats }); } catch (e) {}
+    return;
+  }
+  if (msg.type === "YT_ISOLATE_POPUP_CMD") {
+    postToMain({ type: "YT_ISOLATE_CMD", cmd: msg.cmd, mode: msg.mode });
+    sendResponse({ ok: true });
+  }
+});
 
 ensurePort();
 try {
