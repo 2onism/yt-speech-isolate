@@ -1,0 +1,22 @@
+{
+  "name": "yt-speech-isolate",
+  "private": true,
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "description": "Chrome MV3 extension: intercept YouTube VOD MSE audio, enhance speech locally with DeepFilterNet3, play in sync.",
+  "scripts": {
+    "fetch-model": "node scripts/fetch-model.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests"
+  },
+  "dependencies": {
+    "deepfilternet3-noise-filter": "^1.3.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,6 @@
+node_modules/
+dist/
+vendor/deepfilternet3/*.wasm
+vendor/deepfilternet3/*.tar.gz
+*.log
+.DS_Store

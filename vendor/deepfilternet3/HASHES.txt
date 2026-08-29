@@ -1,0 +1,2 @@
+440b5d12b6ea7d95008736f844221d7874ee15de5cb10d3015002470fdba0432  16418651  df_bg.wasm  https://cdn.mezon.ai/AI/models/datas/noise_suppression/deepfilternet3/v3/pkg/df_bg.wasm
+c94d91f70911001c946e0fabb4aa9adc37045f45a03b56008cb0c8244cb63616  7983136  DeepFilterNet3_onnx.tar.gz  https://cdn.mezon.ai/AI/models/datas/noise_suppression/deepfilternet3/v3/models/DeepFilterNet3_onnx.tar.gz
