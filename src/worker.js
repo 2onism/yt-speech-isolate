@@ -8,6 +8,8 @@ let sep = null;
 let fallback = new GainSeparator(0.2);
 let usingFallback = false;
 let port = null;
+let bootPromise = null;
+let bootDone = false;
 
 function assetUrl(rel) {
   try {
@@ -56,8 +58,18 @@ async function onMsg(ev) {
   const data = ev.data;
   if (!data) return;
   if (data.type === "init") {
-    await boot(data);
+    if (!bootPromise) bootPromise = boot(data);
+    await bootPromise;
+    bootDone = true;
     return;
+  }
+  if (!bootDone) {
+    if (bootPromise) await bootPromise;
+    else {
+      bootPromise = boot(data.type === "init" ? data : null);
+      await bootPromise;
+    }
+    bootDone = true;
   }
   if (data.type === "port") {
     return;
@@ -81,9 +93,7 @@ async function onMsg(ev) {
       out = await fallback.process(data.chunk);
     }
     const t1 = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
-    const transfer = [];
-    if (out && out.pcm && out.pcm.buffer) transfer.push(out.pcm.buffer);
-    post({ type: "processed", chunk: out, wallMs: t1 - t0 }, transfer);
+    post({ type: "processed", chunk: out, wallMs: t1 - t0 });
   }
 }
 
