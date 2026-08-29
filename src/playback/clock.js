@@ -24,6 +24,8 @@ export class PcmClock {
     this._onPlaying = this._onPlaying.bind(this);
     this._forceMute = this._forceMute.bind(this);
     this._tick = this._tick.bind(this);
+    this._onUserGesture = this._onUserGesture.bind(this);
+    this._gestured = false;
   }
 
   setEnabled(on) {
@@ -32,6 +34,8 @@ export class PcmClock {
       this._stopAll();
       try { if (this.video) this.video.muted = false; } catch (e) {}
     } else {
+      this._ensureCtx();
+      this._resumeCtx();
       this._forceMute();
       this._tick();
     }
@@ -59,6 +63,10 @@ export class PcmClock {
     this.video = video;
     this._bound = true;
     this._ensureCtx();
+    try {
+      window.addEventListener("pointerdown", this._onUserGesture, true);
+      window.addEventListener("keydown", this._onUserGesture, true);
+    } catch (e) {}
     video.addEventListener("play", this._onPlay);
     video.addEventListener("pause", this._onPause);
     video.addEventListener("seeking", this._onSeek);
@@ -90,6 +98,10 @@ export class PcmClock {
         video.removeEventListener("volumechange", this._forceMute);
       } catch (e) {}
     }
+    try {
+      window.removeEventListener("pointerdown", this._onUserGesture, true);
+      window.removeEventListener("keydown", this._onUserGesture, true);
+    } catch (e) {}
     if (this._muteIv) { clearInterval(this._muteIv); this._muteIv = null; }
     if (this._tickIv) { clearInterval(this._tickIv); this._tickIv = null; }
     this._stopAll();
@@ -97,8 +109,40 @@ export class PcmClock {
     this._bound = false;
   }
 
+  ctxState() {
+    return (this.ctx && this.ctx.state) || "none";
+  }
+
+  _onUserGesture() {
+    this._gestured = true;
+    this._resumeCtx();
+    this._forceMute();
+    this._tick();
+  }
+
+  _resumeCtx() {
+    const ctx = this._ensureCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(function (e) {
+        console.log(PREFIX, "[CLOCK] resume failed", String(e && e.message || e));
+      });
+    }
+  }
+
   _forceMute() {
     if (!this.enabled) return;
+    // Do not mute YouTube until our AudioContext is actually running,
+    // or ON is total silence.
+    if (!this.ctx || this.ctx.state !== "running") return;
+    const st = this.pipeline && this.pipeline.status;
+    if (st === "unsupported-codec" || st === "unsupported" || st === "drm") {
+      try { if (this.video) this.video.muted = false; } catch (e) {}
+      return;
+    }
+    const t = (this.video && this.video.currentTime) || 0;
+    const chunks = this.pipeline.chunksForPlayback(t - 0.2, t + 1.5);
+    if (!chunks || !chunks.length) return;
     try { if (this.video) this.video.muted = true; } catch (e) {}
   }
 
@@ -119,7 +163,7 @@ export class PcmClock {
   }
 
   _onWaiting() {
-    if (this.ctx && this.ctx.state === "running") this.ctx.suspend().catch(function () {});
+    // Keep AudioContext running; suspending here is how processed audio goes mute.
   }
 
   _onPlaying() {

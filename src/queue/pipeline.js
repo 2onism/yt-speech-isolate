@@ -49,6 +49,8 @@ export class IsolatePipeline {
     this.mode = "isolated";
     this.status = "idle";
     this.emeSkip = false;
+    this.audioCodec = "";
+    this.audioMime = "";
     this.modelInfo = { id: "deepfilternet3", name: "DeepFilterNet3", license: "Apache-2.0 OR MIT", backend: "wasm", sampleRate: 48000 };
     this.videoTime = 0;
     this._config = null;
@@ -89,6 +91,15 @@ export class IsolatePipeline {
 
   markUnsupported() {
     this.status = "unsupported";
+  }
+
+  markCodec(id, mime) {
+    this.audioCodec = id || "";
+    this.audioMime = mime || "";
+    if (id && id !== "opus" && id !== "webm") {
+      this.status = "unsupported-codec";
+      console.log(PREFIX, "[HOOK] audio codec unsupported for intercept:", id, mime || "");
+    }
   }
 
   resetAll() {
@@ -278,6 +289,8 @@ export class IsolatePipeline {
       late: this.bench.late,
       mode: this.mode,
       status: this.status,
+      audioCodec: this.audioCodec,
+      audioMime: this.audioMime,
       model: this.modelInfo,
       enabled: this.enabled,
       queues: {

@@ -64,17 +64,22 @@ function install() {
     return null;
   }
 
+  function isFtyp(u8) {
+    return u8 && u8.length >= 8 &&
+      String.fromCharCode(u8[4], u8[5], u8[6], u8[7]) === "ftyp";
+  }
+
   function sniffKind(u8, mime) {
     const m = (mime || "").toLowerCase();
     if (m.indexOf("video/") === 0) return "video";
-    if (m.indexOf("audio/") === 0) return "audio";
+    if (m.indexOf("audio/") === 0) {
+      if (m.indexOf("mp4") >= 0 || m.indexOf("mp4a") >= 0 || m.indexOf("aac") >= 0) return "aac";
+      if (m.indexOf("webm") >= 0 || m.indexOf("opus") >= 0) return "audio";
+    }
     if (u8 && u8.length >= 4) {
       if (u8[0] === 0x1a && u8[1] === 0x45 && u8[2] === 0xdf && u8[3] === 0xa3) return "audio";
       if (u8[0] === 0x1f && u8[1] === 0x43 && u8[2] === 0xb6 && u8[3] === 0x75) return "audio";
-      if (u8.length >= 8) {
-        const box = String.fromCharCode(u8[4], u8[5], u8[6], u8[7]);
-        if (box === "ftyp") return "video";
-      }
+      if (isFtyp(u8)) return m.indexOf("video/") === 0 ? "video" : "aac";
     }
     return "unknown";
   }
@@ -164,11 +169,19 @@ function install() {
       try { meta.mime = sb.__ytIsolateMime || sb.mimeType || ""; } catch (e) {}
     }
     if (meta.kind === "video") return;
-    if (meta.kind !== "audio") {
+    if (meta.kind !== "audio" && meta.kind !== "aac") {
       meta.kind = sniffKind(copy, meta.mime);
-      if (meta.kind === "video") return;
-      if (meta.kind !== "audio") return;
     }
+    if (meta.kind === "video") return;
+    const low = (meta.mime || "").toLowerCase();
+    const aacMime = low.indexOf("mp4") >= 0 || low.indexOf("mp4a") >= 0 || low.indexOf("aac") >= 0;
+    if (meta.kind === "aac" || aacMime || isFtyp(copy)) {
+      if (low.indexOf("video/") === 0) return;
+      meta.kind = "aac";
+      pipeline.markCodec("aac", meta.mime || "ftyp");
+      return;
+    }
+    if (meta.kind !== "audio") return;
     if (videoEl && videoEl.mediaKeys && !emeLogged) {
       emeLogged = true;
       pipeline.markEme(true);
@@ -362,6 +375,7 @@ function install() {
       processedStart: st.processedStart,
       processedEnd: st.processedEnd,
       playing,
+      audioCtx: pipeline.clock.ctxState ? pipeline.clock.ctxState() : (pipeline.clock.ctx && pipeline.clock.ctx.state) || "none",
       lookahead,
       decoder: st.decoder,
       workers: workersCreated,
@@ -375,6 +389,8 @@ function install() {
       queues: q,
       status: st.status,
       mode: st.mode,
+      audioCodec: st.audioCodec,
+      audioMime: st.audioMime,
       model: st.model,
       enabled: st.enabled,
       processedSec: processedEnd

@@ -72,8 +72,14 @@ async function main() {
     entryPoints: [join(ROOT, "src/offscreen.js")],
     outfile: join(DIST, "offscreen.js")
   });
+  await esbuild.build({
+    ...common,
+    entryPoints: [join(ROOT, "src/popup.js")],
+    outfile: join(DIST, "popup.js")
+  });
 
-  await copyFile(join(ROOT, "src/ui/hud.css"), join(DIST, "hud.css"));
+  await copyFile(join(ROOT, "src/popup.css"), join(DIST, "popup.css"));
+  await copyFile(join(ROOT, "src/popup.html"), join(DIST, "popup.html"));
   await copyFile(join(ROOT, "src/offscreen.html"), join(DIST, "offscreen.html"));
   await copyFile(join(ROOT, "src/manifest.json"), join(DIST, "manifest.json"));
   await copyFile(wasmSrc, join(DIST, "assets", "df_bg.wasm"));
